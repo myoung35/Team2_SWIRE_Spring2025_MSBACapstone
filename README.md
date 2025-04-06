@@ -1,4 +1,4 @@
-#SWIRE Delivery Standardization 
+# SWIRE Delivery Standardization 
 ## MSBA Capstone
 ## Team 2 - Imogen Holdsworth & Madalyn Young
 
