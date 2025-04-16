@@ -451,46 +451,9 @@ ggplot(Annual_Customer_ALL, aes(x = factor(ON_BOARDING_YEAR))) +
 ```
 Most of the database are new customers. 
 
-We created segments to understand the customers a bit better
-```{r}
-Annual_Customer_ALL %>% 
-  filter(Binning_column == "high volume high growth" | Binning_column == "high volume low growth") %>% 
-ggplot( aes(x = Binning_column, y = (total_ordered_2023+total_ordered_2024))) +
-  geom_boxplot(fill = "skyblue", color = "darkblue") +
-  labs(title = "Average Orders by Customer Segment",
-       x = "Customer Segment",
-       y = "Average Orders") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-```{r}
-Annual_Customer_ALL %>% 
-  filter(Binning_column == "low volume high growth" | Binning_column == "low volume low growth") %>% 
-ggplot( aes(x = Binning_column, y = (total_ordered_2023+total_ordered_2024))) +
-  geom_boxplot(fill = "skyblue", color = "darkblue") +
-  labs(title = "Average Orders by Customer Segment",
-       x = "Customer Segment",
-       y = "Average Orders") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-```{r}
-Annual_Customer_ALL %>% 
-  filter(Binning_column == "transtionary growing" | Binning_column == "transitionary declining") %>% 
-ggplot( aes(x = Binning_column, y = (total_ordered_2023+total_ordered_2024))) +
-  geom_boxplot(fill = "skyblue", color = "darkblue") +
-  labs(title = "Average Orders by Customer Segment",
-       x = "Customer Segment",
-       y = "Average Orders") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
 
 
-From the above, we see the majority of this dataset are customers under performing as shown by the proprtions below:
-
+We see the majority of this data set are customers under performing as shown by the proportions below
 ```{r}
 Annual_Customer_ALL %>%
   mutate(order_group = ifelse(total_ordered_2023 < 400 | total_ordered_2024 < 400, "<400", "400+")) %>%
@@ -700,7 +663,537 @@ ggplot(order_type_summary, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = coun
 ```
 
 
-### Local Market Partner/CO2/Gallons only
+## Segment Analysis
+
+After some basic modeling, we found that a lot of the non-numeric variables were not statistically significant, or if they were the coefficients were not impactful to a customers future orders, which is what we want to determine in order to determine if we should keep the customer on red truck. 
+
+We created customer segments to identify any differences between customer order/growth groups
+
+We created segments to understand the customers a bit better
+
+### High Volume High Growth Customers
+these are customers that order above 400 gallons in both years and have a growth rate over 5%
+
+#### Order distribution of HV customers
+```{r}
+Annual_Customer_ALL %>% 
+  filter(Binning_column == "high volume high growth" | Binning_column == "high volume low growth") %>% 
+ggplot( aes(x = Binning_column, y = (total_ordered_2023+total_ordered_2024))) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  labs(title = "Average Orders by Customer Segment",
+       x = "Customer Segment",
+       y = "Average Orders") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+See a large deviation in order amounts with some very large customers in this group
+
+#### Frequent Order Type
+```{r}
+HVHG <- Annual_Customer_ALL %>% 
+  filter(Binning_column == "high volume high growth" )
+  
+order_type_summaryHVHG <- HVHG |>
+  group_by(FREQUENT_ORDER_TYPE) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count))
+
+# Plot Frequent Order Type Distribution
+ggplot(order_type_summaryHVHG, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = count)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Frequent Order Type Breakdown",
+       x = "Frequent Order Type",
+       y = "Number of Customers",
+       fill = "Reached 400 Gallons in 2023") +
+  coord_flip() +
+  theme_minimal()
+  
+```
+
+
+#### Trade Channel
+```{r}
+HVHG %>% 
+  ggplot(aes(x = COLD_DRINK_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+HVHG %>% 
+  ggplot(aes(x = TRADE_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CO2
+```{r}
+HVHG %>%
+  count(CO2_CUSTOMER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+
+#### LMP
+```{r}
+HVHG %>%
+  count(LOCAL_MARKET_PARTNER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+#### On Boarding Year
+```{r}
+HVHG %>% 
+  ggplot(aes(x = ON_BOARDING_YEAR)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by On Boarding Year",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### High Volume Low Growth
+these are customers that order above 400 gallons in both years and have a growth rate less than 5%
+
+#### Frequent Order Type
+```{r}
+HVLG <- Annual_Customer_ALL %>% 
+  filter(Binning_column == "high volume low growth" )
+  
+order_type_summaryHVLG <- HVLG |>
+  group_by(FREQUENT_ORDER_TYPE) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count))
+
+# Plot Frequent Order Type Distribution
+ggplot(order_type_summaryHVLG, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = count)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Frequent Order Type Breakdown",
+       x = "Frequent Order Type",
+       y = "Number of Customers",
+       fill = "Reached 400 Gallons in 2023") +
+  coord_flip() +
+  theme_minimal()
+  
+```
+
+#### Trade Channel 
+
+```{r}
+HVLG %>% 
+  ggplot(aes(x = COLD_DRINK_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+HVLG %>% 
+  ggplot(aes(x = TRADE_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CO2 
+```{r}
+HVLG %>%
+  count(CO2_CUSTOMER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+#### LMP
+
+```{r}
+HVLG %>%
+  count(LOCAL_MARKET_PARTNER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+
+#### On Boarding Year
+```{r}
+HVLG %>% 
+  ggplot(aes(x = ON_BOARDING_YEAR)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by On Boarding Year",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+Not as many 2024 on boarded customers, but still heavily distributed in the last 5 to 10 years
+
+### Low Volume High Growth
+These are customers that ordered less than 400 gallons in each year and have a growth rate of 10% or greater
+#### Order distribution for LV customers
+
+```{r}
+Annual_Customer_ALL %>% 
+  filter(Binning_column == "low volume high growth" | Binning_column == "low volume low growth") %>% 
+ggplot( aes(x = Binning_column, y = (total_ordered_2023+total_ordered_2024))) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  labs(title = "Average Orders by Customer Segment",
+       x = "Customer Segment",
+       y = "Average Orders") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+order volume mean is slightly higher for low growth customers. 
+
+#### Frequent Order Type
+```{r}
+LVHG <- Annual_Customer_ALL %>% 
+  filter(Binning_column == "low volume high growth" )
+  
+order_type_summaryLVHG <- LVHG |>
+  group_by(FREQUENT_ORDER_TYPE) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count))
+
+# Plot Frequent Order Type Distribution
+ggplot(order_type_summaryLVHG, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = count)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Frequent Order Type Breakdown",
+       x = "Frequent Order Type",
+       y = "Number of Customers",
+       fill = "Reached 400 Gallons in 2023") +
+  coord_flip() +
+  theme_minimal()
+  
+```
+
+No EDI in this group, but minimal in the high volume customer groups
+
+#### Trade Channel 
+
+```{r}
+LVHG %>% 
+  ggplot(aes(x = COLD_DRINK_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+maybe slightly less distribution between smaller cold drink channels, but still majority is dining
+
+```{r}
+LVHG %>% 
+  ggplot(aes(x = TRADE_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CO2 
+```{r}
+LVHG %>%
+  count(CO2_CUSTOMER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+#### LMP
+
+```{r}
+LVHG %>%
+  count(LOCAL_MARKET_PARTNER) %>%
+  mutate(proportion = n / sum(n))
+```
+More local market partners in this group. First major difference between customer segments.
+
+#### On Boarding Year
+```{r}
+LVHG %>% 
+  ggplot(aes(x = ON_BOARDING_YEAR)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by On Boarding Year",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Not very many older customers. Still see the skewedness in new customers
+
+### Low Volume Low Growth
+These are customers that ordered less than 400 gallons in each year and have a growth rate of less than 10% 
+
+
+#### Frequent Order Type
+```{r}
+LVLG <- Annual_Customer_ALL %>% 
+  filter(Binning_column == "low volume low growth" )
+  
+order_type_summaryLVLG <- LVLG |>
+  group_by(FREQUENT_ORDER_TYPE) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count))
+
+# Plot Frequent Order Type Distribution
+ggplot(order_type_summaryLVLG, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = count)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Frequent Order Type Breakdown",
+       x = "Frequent Order Type",
+       y = "Number of Customers",
+       fill = "Reached 400 Gallons in 2023") +
+  coord_flip() +
+  theme_minimal()
+  
+```
+Sales rep proves to be dominant across all main customer groups
+
+#### Trade Channel 
+
+```{r}
+LVLG %>% 
+  ggplot(aes(x = COLD_DRINK_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+maybe slightly less distribution between smaller cold drink channels, but still majority is dining
+
+```{r}
+LVLG %>% 
+  ggplot(aes(x = TRADE_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CO2 
+```{r}
+LVLG %>%
+  count(CO2_CUSTOMER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+#### LMP
+
+```{r}
+LVLG %>%
+  count(LOCAL_MARKET_PARTNER) %>%
+  mutate(proportion = n / sum(n))
+```
+More local market partners in this group. Possibly show that more Low volme customers are LMP
+
+#### On Boarding Year
+```{r}
+LVLG %>% 
+  ggplot(aes(x = ON_BOARDING_YEAR)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by On Boarding Year",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+### Transitionary Growing
+These are customers that ordered under threshold in year 1 and ordered above in year 2
+
+#### Order distributions of transitionary customers
+```{r}
+Annual_Customer_ALL %>% 
+  filter(Binning_column == "transtionary growing" | Binning_column == "transitionary declining") %>% 
+ggplot( aes(x = Binning_column, y = (total_ordered_2023+total_ordered_2024))) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  labs(title = "Average Orders by Customer Segment",
+       x = "Customer Segment",
+       y = "Average Orders") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### Frequent Order Type
+```{r}
+TG <- Annual_Customer_ALL %>% 
+  filter(Binning_column == "transtionary growing" )
+  
+order_type_summaryTG <- TG |>
+  group_by(FREQUENT_ORDER_TYPE) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count))
+
+# Plot Frequent Order Type Distribution
+ggplot(order_type_summaryTG, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = count)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Frequent Order Type Breakdown",
+       x = "Frequent Order Type",
+       y = "Number of Customers",
+       fill = "Reached 400 Gallons in 2023") +
+  coord_flip() +
+  theme_minimal()
+  
+```
+Sales rep proves to be dominant across all main customer groups
+
+#### Trade Channel 
+
+```{r}
+TG %>% 
+  ggplot(aes(x = COLD_DRINK_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+maybe slightly less distribution between smaller cold drink channels, but still majority is dining
+
+```{r}
+TG %>% 
+  ggplot(aes(x = TRADE_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CO2 
+```{r}
+TG %>%
+  count(CO2_CUSTOMER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+#### LMP
+
+```{r}
+TG %>%
+  count(LOCAL_MARKET_PARTNER) %>%
+  mutate(proportion = n / sum(n))
+```
+More local market partners in this group as well. On par with low volume customers, which might prove this is important because this group was low volume in year 1 
+
+#### On Boarding Year
+```{r}
+TG %>% 
+  ggplot(aes(x = ON_BOARDING_YEAR)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by On Boarding Year",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+A lot of new customers again
+
+
+### Transitionary Declining
+There are customers that had ordered over threshold and declined to below threshold in year 2
+
+#### Frequent Order Type
+```{r}
+TD <- Annual_Customer_ALL %>% 
+  filter(Binning_column == "transitionary declining" )
+  
+order_type_summaryTD <- TD |>
+  group_by(FREQUENT_ORDER_TYPE) |>
+  summarise(count = n(), .groups = "drop") |>
+  arrange(desc(count))
+
+# Plot Frequent Order Type Distribution
+ggplot(order_type_summaryTD, aes(x = reorder(FREQUENT_ORDER_TYPE, count), y = count)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Frequent Order Type Breakdown",
+       x = "Frequent Order Type",
+       y = "Number of Customers",
+       fill = "Reached 400 Gallons in 2023") +
+  coord_flip() +
+  theme_minimal()
+  
+```
+Sales rep proves to be dominant across all main customer groups
+
+#### Trade Channel 
+
+```{r}
+TD %>% 
+  ggplot(aes(x = COLD_DRINK_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+maybe slightly less distribution between smaller cold drink channels, but still majority is dining
+
+```{r}
+TD %>% 
+  ggplot(aes(x = TRADE_CHANNEL)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by Trade Channel",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CO2 
+```{r}
+TD %>%
+  count(CO2_CUSTOMER) %>%
+  mutate(proportion = n / sum(n))
+```
+
+#### LMP
+
+```{r}
+TD %>%
+  count(LOCAL_MARKET_PARTNER) %>%
+  mutate(proportion = n / sum(n))
+```
+More local market partners in this group as well. It looks like only the high volume customers have under 90% LMP
+
+#### On Boarding Year
+```{r}
+TD %>% 
+  ggplot(aes(x = ON_BOARDING_YEAR)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Customer Count by On Boarding Year",
+       x = "Trade Channel",
+       y = "Number of Customers") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Local Market Partner/CO2/Gallons only
+In the scope of the project, we were asked to look at LMPs that only order gallons (no cans) and do not order CO2. As shown above, we think there might not be variables provided to us to understand *why* there are differences in ordering between these two groups. But we do perform a t-test and do show that these customers in fact do order less than standard customers. This is likely due to the fact that gallons likely last longer than cans and they are not contractually connected to SWIRE with other contracts through CO2
 
 ```{r}
 # the "main" data that was used previously : all customer data profile joined with transaction using the Customer Profile Location Data created above.
@@ -772,9 +1265,11 @@ Year over year order growth was examined, revealing instnaces of 'infiinte' grow
 Co2 customer segmentation found differing behvior between CO2 and on CO2 customers, where a pretty even split of the customers did and do not order CO2, but those that were CO2 customers saw higher median order amounts, but the non CO2 customers saw higher average order amounts, indicating that CO₂ purchases could be a factor in higher-order volume stability. Further segmentation by trade channels, order types, and delivery method (red truck vs. white truck) may provide additional insights into customer retention and profitability.
 
 
-The analysis focuses on understanding customer ordering behavior, segmentation, and threshold performance. The dataset contains red truck customers (served directly by Swire) and white truck customers (who receive deliveries via third-party distributors). A key threshold of 400 gallons per year is used to determine which customers should remain serviced by Swire’s internal fleet. Many customers fall below this threshold, while a small number account for a large share of total sales, suggesting revenue concentration among high-volume buyers. The log-transformed distributions highlight a mid-tier customer segment that is obscured in the raw data, and there is a significant portion of customers with zero orders, indicating potential churn or re-engagement opportunities.
+The analysis focuses on understanding customer ordering behavior, segmentation, and threshold performance. A key threshold of 400 gallons per year is used to determine which customers should remain serviced by Swire’s internal fleet. Many customers fall below this threshold, while a small number account for a large share of total sales, suggesting revenue concentration among high-volume buyers. The log-transformed distributions highlight a mid-tier customer segment that is obscured in the raw data, and there is a significant portion of customers with zero orders, indicating potential churn or re-engagement opportunities.
 
-There does seem to be a lot of distribution issues in the non numeric featurs which might bias models.
+There does seem to be a lot of distribution issues in the non numeric features which might bias models.
+
+There also does not seem to be very many distinct differences between customer segments, which might make it challenging for a model to predict future customer performance.
 
 ## EDA Questions:
 
