@@ -28,7 +28,7 @@ Support delivery planning with quantitative customer insights.
 
 ### 1. **Exploratory Data Analysis**
 - Investigated order trends, outliers, seasonal patterns, and customer geography.
-- Key insights include high variation in baseline volume and YOY growth by customer type, distinct customer locational segments, retail and non retailer customer differences, and 
+- Key insights include high variation in baseline volume and YOY growth by customer type, distinct customer locational segments, retail and non retailer customer differences, and customer segmentation based on ordering trends
 
 ### 2. **Customer Segmentation**
 Customers were grouped based on:
