@@ -38,7 +38,7 @@ Low Volume High Growth, Low Volume Low Growth, High Volume High Growth, High Vol
 Retailer or non retailer customer status
 
 ### 3. **Modeling Framework**
-In order to support delivery insights for all customers, tow routes of analysis were completed, one for the retailer customers and one for the non retail customers. 
+In order to support delivery insights for all customers, two routes of analysis were completed, one for the retailer customers and one for the non retail customers. 
 
 - **Non-Retail Customers**:
   - Used multilevel logistic models (MLM) to predict 2024 order volumes.
